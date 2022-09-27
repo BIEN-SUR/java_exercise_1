@@ -1,87 +1,80 @@
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
-public class Predict implements Command {
-    @Override
-    public String name() {
+class Predict implements Command 
+{
+    public String name() 
+    {
         return "predict";
     }
-
-    @Override
     public boolean run(Scanner scanner) {
-        System.out.println("Entrez le chemin d'accès au fichier texte :");
+        System.out.println("Entrez le chemin du fichier :");
         String path = scanner.nextLine();
-        System.out.print("Premier mot: ");
-        String first = scanner.nextLine();
-        predict(path, first);
+        var path1 = Paths.get(path);
+        if (!path1.toFile().exists()) {
+            System.out.println("File not found");
+        } else {
+            String content = null;
+            try {
+                content = Files.readString(path1);
+            } catch (IOException e) {
+                System.out.println("Unreadable file : " + e.getClass().getName() + " : " + e.getMessage());
+            }
+            assert content != null;
+            if (!content.isBlank()) {
+                content = content.toLowerCase();
+                content = content.replaceAll("\\r\\n|\\r|\\n", " ");
+                Map<String, String> map = new HashMap<>();
+                String[] words = content.replaceAll("[^\\w\\s]", "").split(" ");
+                for (int i = 0; i < words.length - 1; i++) {
+                    String word = words[i];
+                    String nextWord = words[i + 1];
+                    if (map.containsKey(word)) {
+                        String mostFrequentFollowingWord = map.get(word);
+                        if (countOccurrences(content, word, nextWord) > countOccurrences(content, word, mostFrequentFollowingWord)) {
+                            map.put(word, nextWord);
+                        }
+                    } else {
+                        if (!word.isEmpty()) {
+                            map.put(word, nextWord);
+                        }
+                    }
+                }
+                System.out.println("Entrez un mot : ");
+                String word = scanner.nextLine();
+                word = word.toLowerCase();
+                String result = word;
+                for (int i = 0; i < 19; i++) {
+                    if (map.containsKey(word)) {
+                        result += " " + map.get(word);
+                        word = map.get(word);
+                    } else {
+                        break;
+                    }
+                }
+                System.out.println(result);
+                return false;
+            } else {
+                System.out.println("Empty file");
+            }
+        }
         return false;
     }
-    @SuppressWarnings("unchecked")
-    private void predict(String path, String first) {
-        try{
-            String content = Files.readString(Paths.get(path));
-            var keys = Arrays.stream(content.replaceAll("[,.;:?()\\[\\]'\\s]"," ").toLowerCase().split(" +")).toList();
-            String[] uniques = keys.stream().distinct().toArray(String[]::new);
-            HashMap<Integer, Integer>[] nextKeys = new HashMap[uniques.length];
-            if (keys.size() < 1)
-                return;
-            int indexActual = findIndex(uniques, keys.get(0));
-            String[] keysArray = keys.toArray(String[]::new);
-            for (int i = 1; i < keysArray.length; ++i){
-                int indexNext = findIndex(uniques, keysArray[i]);
-                if (nextKeys[indexActual] == null){
-                    nextKeys[indexActual] = new HashMap<>();
-                }
-                if (nextKeys[indexActual].containsKey(indexNext)){
-                    nextKeys[indexActual].put(indexNext, nextKeys[indexActual].get(indexNext)+1);
-                }else{
-                    nextKeys[indexActual].put(indexNext, 1);
-                }
-                indexActual = indexNext;
-            }
 
-            StringBuilder out= new StringBuilder();
-            final int limit = 20;
-            out.append(first);
-            int index = findIndex(uniques, first.toLowerCase());
-            if (index == -1){
-                System.out.println("Le mot n'est pas dans le texte");
-                return;
-            }
-            for (int i = 1; i < limit; ++i){
-                if (nextKeys[index] == null){
-                    break;
-                }
-                var select = nextKeys[index].entrySet().stream().max(Map.Entry.comparingByValue());
-                if (select.isPresent()){
-                    index = select.get().getKey();
-                    out.append(" ").append(uniques[index]);
-                }else {
-                    break;
-                }
-            }
-            if (out.length() > 0){
-                System.out.println(out);
-            }
-
-
-
-        }catch (IOException e){
-            System.out.println("Unreadable file: "+e.getClass().getName()+" "+e.getMessage());
-        }
-    }
-
-    private int findIndex(String[] uniques, String s) {
-        for (int i = 0; i < uniques.length; ++i){
-            if (uniques[i].equals(s)){
-                return i;
+    private int countOccurrences(String content, String word, String nextWord) {
+        int count = 0;
+        int index = 0;
+        while (index != -1) {
+            index = content.indexOf(word + " " + nextWord, index);
+            if (index != -1) {
+                count++;
+                index += word.length() + nextWord.length() + 1;
             }
         }
-        return -1;
+        return count;
     }
 }
