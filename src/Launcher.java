@@ -1,29 +1,45 @@
 import java.util.Scanner;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Launcher
 {
     public static void main(String[] args)
     {
+        List <Command> commands = new ArrayList <>();
+        Scanner scanner = new Scanner(System.in);
+        commands.add(new Quit());
+        commands.add(new Fibo());
+        commands.add(new Freq());
+        commands.add(new Preditct());
         System.out.println("Bienvenue !");
-        var scanner = new Scanner(System.in);
-        String input = scanner.nextLine();
-        while(!"quit".equalsIgnoreCase(input))
+        
+        
+        while(true)
         {
-            if("fibo".equalsIgnoreCase(input))
+            String input = scanner.nextLine();
+            boolean result = false, check = true;
+            for(Command command : commands)
             {
-                System.out.println("Tapez un nombre");
-                int nb = scanner.nextInt();
-                int fibonacci = Fibonacci.fibo(nb);
-                System.out.println("F("+nb+") = " + fibonacci);
-                input = scanner.nextLine();
+                if(command.name().equalsIgnoreCase(input))
+                {
+                    result = command.run(scanner);
+                    check = false;
+                    break;
+                }
             }
-            else
-            {
-                System.out.println("Unknown Command");
-            }
-            input = scanner.nextLine();
 
+            if(result)
+            {
+                break;
+            }
+
+            if(check)
+            {
+                System.out.println("Unknown command");
+            }
         }
-        scanner.close();
+        
+
     }
 }
