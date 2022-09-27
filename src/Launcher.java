@@ -11,7 +11,7 @@ public class Launcher
         commands.add(new Quit());
         commands.add(new Fibo());
         commands.add(new Freq());
-        commands.add(new Preditct());
+        //commands.add(new Preditct());
         System.out.println("Bienvenue !");
         
         
@@ -32,8 +32,7 @@ public class Launcher
             if(result)
             {
                 break;
-            }
-
+            }   
             if(check)
             {
                 System.out.println("Unknown command");
